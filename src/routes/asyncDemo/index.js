@@ -3,12 +3,14 @@ import {connect} from 'dva'
 import moment from 'moment'
 import './index.less'
 import 'antd/dist/antd.css'
-import { Button, Col, Form, Input, message, Row, DatePicker, Select } from 'antd'
+import {Button, Col, Form, Input, message, Row, DatePicker, Select, Radio, Cascader, TimePicker} from 'antd'
+import optionsss from '../../utils/Options'
 import QueueAnim from 'rc-queue-anim'
 
 const { TextArea } = Input;
 const FormItem = Form.Item;
 const Option = Select.Option;
+const RadioGroup = Radio.Group;
 
 @Form.create()
 class FormPage extends Component {
@@ -16,7 +18,22 @@ class FormPage extends Component {
     super(props)
     this.state = {
       loading: false,
-      submitted: false
+      submitted: false,
+      options: [],
+      // options: [{
+      //   value: '',
+      //   label: '',
+      //   children: [{
+      //     value: '',
+      //     label: '',
+      //     children: [
+      //       {
+      //         value: '',
+      //         label: ''
+      //       }
+      //     ]
+      //   }]
+      // }]
     }
     this.handleSubmit = this.handleSubmit.bind(this)
     this.handleReset = this.handleReset.bind(this)
@@ -28,16 +45,23 @@ class FormPage extends Component {
     this.props.form.validateFieldsAndScroll((err, values) => {
       if (err) { console.log(err) }
       else {
+        console.log('values.hotel_name', values.hotel_name)
+        console.log('values.leavehour', moment(values.leavehour).format('HH:mm'))
+        console.log('values.leavehour', moment(values.arrivehour).format('HH:mm'))
         const body = {
           ...values,
           flag: this.props.app.formData.flag,
-          check_in: values.check_in? moment(values.check_in).format('YYYY-MM-DD'): '',
-          check_out: values.check_out? moment(values.check_out).format('YYYY-MM-DD'): '',
-          apartment_type: values.apartment,
+          check_in: values.check_in ? moment(values.check_in).format('YYYY-MM-DD') : '',
+          check_out: values.check_out ? moment(values.check_out).format('YYYY-MM-DD') : '',
+          arrive: values.arrive ? moment(values.arrive).format('YYYY-MM-DD') + ' ' + moment(values.arrivehour).format('HH:mm') : '',
+          leave: values.leave ? moment(values.leave).format('YYYY-MM-DD') + ' ' + moment(values.leavehour).format('HH:mm') : '',
+          hotel_type: values.hotel_name ? values.hotel_name[1] : '',
+          hotel_room_num: values.hotel_name ? values.hotel_name[2] : '',
+          hotel_name: values.hotel_name ? values.hotel_name[0] : ''
       }
         // 处理发送的数据
         const id = this.props.app.formData.id
-        fetch(`http://form.andyhui.xin/nteam/${id}`, {
+        fetch(`http://form.andyhui.top/nteam/${id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json'
@@ -46,11 +70,14 @@ class FormPage extends Component {
         }).then((res) => {
           return res.json()
         }).then((json) => {
-          // 也可以直接对返回的res数据操作,看后端给的啥数据格式
-          console.log(json)
+          console.log('jaon',json)
           if (json.code === 1000){
             message.success('提交成功')
             this.setState({submitted: true})
+            // this.props.history.push('/success')
+          }
+          else {
+            message.error(json.message)
           }
         }).catch((e) => {
           console.log(e.message)
@@ -61,7 +88,69 @@ class FormPage extends Component {
       this.setState({loading: false})
     }, 1000)
   }
+  componentDidMount() {
+    fetch(`http://form.andyhui.top/hotel`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).then((res) => {
+      return res.json()
+    }).then(json => {
+      // console.log('json', json)
+      let options = []
+      const type = []
+      const type2 = []
+      for (let k in json.hotels) {
+        options.push({value: k, label: k, children: []})
+        let flag = []
+        let flag2 = []
+        for (let l in json.hotels[k]) {
+          flag.push(l)
+          flag2.push(json.hotels[k][l])
+          console.log('1', json.hotels[k])
+          console.log('2', json.hotels[k][l])
+        }
+        type.push(flag)
+        type2.push(flag2)
+      }
 
+      let hotelType = []
+      // console.log('length', type.length)
+      for (let i = 0; i < type.length; i++) {
+        hotelType[i] = type[i]
+      }
+
+      let hotelType2 = []
+      // console.log('length', type.length)
+      for (let i = 0; i < type2.length; i++) {
+        hotelType2[i] = type2[i]
+      }
+      console.log(' hotelType2[i]', hotelType2)
+      const len = options.length
+      // // console.log('len', len)
+      for (let i = 0; i < len; i++) {
+      //   console.log('hotelType', i, hotelType[i])
+        const value = hotelType[i].map(item => {
+          return item
+        })
+        const value2 = hotelType2[i].map(item => {
+          console.log('item', item)
+          const value3 = item.map(res => {
+            console.log('res', res.hotel_room_num)
+            return res.hotel_room_num
+          })
+          return value3
+        })
+        console.log('value3', value2)
+        for (let j = 0; j < value.length; j++) {
+          // console.log('hotel', hotelType[i])
+          options[i].children.push({label: value[j], value: value[j], children: [{label: value2[j], value: ''}]})
+        }
+      }
+      this.setState({options})
+    })
+  }
   handleReset (e) {
     e.preventDefault()
     this.setState({loading: false})
@@ -97,12 +186,12 @@ class FormPage extends Component {
           <FormItem
             label='个人id'
             {...formItemLayout}
-            key='form-content-name'
+            key='form-content-id'
           >
             {getFieldDecorator('id', {
-              initialValue: `${middleFlag}${(this.props.app.formData.flag || '').slice(3,4)}`
+              initialValue: `${middleFlag}${(this.props.app.formData.flag || '').slice(3, 4)}`
             })(
-              <Input className='form-content-input' disabled='true' />
+              <Input className='form-content-input' disabled />
             )}
           </FormItem>
           <FormItem
@@ -113,10 +202,10 @@ class FormPage extends Component {
             {getFieldDecorator('name', {
               initialValue: this.props.app.formData.name
             })(
-              <Input className='form-content-input' disabled='true' />
+              <Input className='form-content-input' disabled />
             )}
           </FormItem>
-          <FormItem
+          {/*  <FormItem
             label='手机号'
             {...formItemLayout}
             key="form-content-mobile"
@@ -167,20 +256,20 @@ class FormPage extends Component {
             )(
               <Input className='form-content-input' disabled='true' />,
             )}
-          </FormItem>
+          </FormItem> */}
           <FormItem
             label='所在学校'
             {...formItemLayout}
             key="form-content-school"
           >
             {getFieldDecorator('school',{
-                initialValue: this.props.app.formData.school
-              }
+              initialValue: this.props.app.formData.school
+            }
             )(
-              <Input className='form-content-input' disabled='true' />,
+              <Input className='form-content-input' disabled />
             )}
           </FormItem>
-          <FormItem
+          {/* <FormItem
             label='曾获奖项'
             {...formItemLayout}
             key="form-content-reward"
@@ -191,22 +280,22 @@ class FormPage extends Component {
             )(
               <Input className='form-content-input' disabled='true' />,
             )}
-          </FormItem>
+          </FormItem> */}
           <FormItem
             label='身份证号'
             {...formItemLayout}
             key="form-content-identify"
-            extra="用于办理保险"
+            extra='用于办理保险'
           >
             {getFieldDecorator('id_card', {
-                rules: [{
-                  required: true, message: '请输入身份证号',
-                  pattern: /^(\d{6})(\d{4})(\d{2})(\d{2})(\d{3})([0-9]|X)$/,
-                }],
-                initialValue: this.props.app.formData.id_card
-              }
+              rules: [{
+                required: true, message: '请输入身份证号',
+                pattern: /^(\d{6})(\d{4})(\d{2})(\d{2})(\d{3})([0-9]|X)$/,
+              }],
+              initialValue: this.props.app.formData.id_card ? this.props.app.formData.id_card.replace(/(\s*$)/g, '') : ''
+            }
             )(
-              <Input className='form-content-input' />,
+              <Input className='form-content-input' />
             )}
           </FormItem>
           <FormItem
@@ -214,7 +303,7 @@ class FormPage extends Component {
             {...formItemLayout}
             key="form-content-address"
             hasFeedback
-            extra="精确到村（培训基地档案上报需要）"
+            extra="精确到村"
           >
             {getFieldDecorator('native_place', {
               rules: [{
@@ -222,7 +311,72 @@ class FormPage extends Component {
               }],
               initialValue: this.props.app.formData.native_place
             })(
-              <TextArea rows={4} />
+              <Input className='form-content-input' />
+            )}
+          </FormItem>
+          <FormItem
+            label='行程抵达时间'
+            {...formItemLayout}
+            key="form-content-arrive"
+            hasFeedback
+          >
+            {getFieldDecorator('arrive', {
+              rules: [{
+                required: true, message: '请输入抵达日期'
+              }],
+              initialValue: this.props.app.formData.arrive ? moment(this.props.app.formData.arrive.slice(0, 10)) : ''
+            }
+            )(
+              <DatePicker placeholder='请选择抵达日期' style={{width: '300px'}} />,
+            )}
+          </FormItem>
+          <FormItem
+            label='抵达具体时间'
+            {...formItemLayout}
+            key="form-content-arrivehour"
+            hasFeedback
+          >
+            {getFieldDecorator('arrivehour', {
+              rules: [{
+                required: true, message: '请选择抵达时间'
+              }],
+              initialValue: this.props.app.formData.arrive ? moment(this.props.app.formData.arrive.slice(11, 16), 'HH:mm') : ''
+            }
+            )(
+              <TimePicker placeholder="请选择小时分钟" format='HH:mm' style={{width: '300px'}} />
+            )}
+          </FormItem>
+          <FormItem
+            label='行程离开日期'
+            {...formItemLayout}
+            key="form-content-leave"
+            hasFeedback
+          >
+            {getFieldDecorator('leave', {
+              rules: [{
+                required: true, message: '请选择离开时间'
+              }],
+              initialValue: this.props.app.formData.leave ? moment(this.props.app.formData.leave.slice(0, 10)) : ''
+            }
+            )(
+              <DatePicker placeholder='请选择抵达日期' style={{width: '300px'}} />,
+              <TimePicker format="HH:mm" />
+            )}
+          </FormItem>
+          <FormItem
+            label='离开具体时间'
+            {...formItemLayout}
+            key="form-content-leavehour"
+            hasFeedback
+          >
+            {getFieldDecorator('leavehour', {
+              rules: [{
+                required: true, message: '请选择离开时间'
+              }],
+              initialValue: this.props.app.formData.leave ? moment(this.props.app.formData.leave.slice(11, 16), 'HH:mm') : ''
+            }
+            )(
+              <TimePicker placeholder="请选择小时分钟" format='HH:mm' style={{width: '300px'}} />
             )}
           </FormItem>
           <FormItem
@@ -231,7 +385,10 @@ class FormPage extends Component {
             key="form-content-livedate"
             hasFeedback
           >
-            {getFieldDecorator('check_in',{
+            {getFieldDecorator('check_in', {
+              rules: [{
+                required: true, message: '请选择入住时间'
+              }],
               initialValue: this.props.app.formData.check_in ? moment(this.props.app.formData.check_in) : '',
               }
             )(
@@ -255,6 +412,58 @@ class FormPage extends Component {
 
             )}
           </FormItem>
+          <FormItem
+            label='选择宾馆'
+            {...formItemLayout}
+            key='form-content-hotel_name'
+            hasFeedback
+          >
+            {getFieldDecorator('hotel_name', {
+              rules: [{
+                required: true, message: '请选择宾馆'
+              }],
+              initialValue: [this.props.app.formData.hotel_name || '', this.props.app.formData.hotel_type || '', this.props.app.formData.hotel_room_num || '']
+            })(
+              <Cascader
+                options={this.state.options}
+              />
+            )}
+          </FormItem>
+          <FormItem
+            label='接受房间调剂'
+            {...formItemLayout}
+            key="form-content-roomadjust"
+          >
+            {getFieldDecorator('adjust', {
+              rules: [{
+                required: true, message: '请选择是否接受房间调剂'
+              }],
+              initialValue: this.props.app.formData.adjust
+            })(
+              <RadioGroup>
+                <Radio value={'是'}>是</Radio>
+                <Radio value={'否'}>否</Radio>
+              </RadioGroup>
+            )}
+          </FormItem>
+          <FormItem
+            label='在食堂就餐'
+            {...formItemLayout}
+            key="form-content-restaurant"
+          >
+            {getFieldDecorator('eat_canteen', {
+              rules: [{
+                required: true, message: '请选择是否在食堂就餐'
+              }],
+              initialValue: this.props.app.formData.eat_canteen
+            })(
+              <RadioGroup>
+                <Radio value={'是'}>是</Radio>
+                <Radio value={'否'}>否</Radio>
+              </RadioGroup>
+            )}
+          </FormItem>
+
           <FormItem
             label='特殊要求备注'
             {...formItemLayout}

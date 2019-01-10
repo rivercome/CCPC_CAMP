@@ -12,8 +12,8 @@ class HomePage extends Component {
     e.preventDefault();
     this.props.form.validateFields((err, values) => {
       if (!err) {
-        console.log('Received values of form: ', values);
-        axios('http://form.andyhui.xin/check',{
+        // console.log('Received values of form: ', values);
+        axios('http://form.andyhui.top/check',{
           method: 'POST',
           data:{
             mobile: values.password,
@@ -21,14 +21,14 @@ class HomePage extends Component {
           },
         }).then(
           res =>{
-            console.log(res)
+            // console.log(res)
             if (res.data.code === 1000){
-              console.log(res.data)
+              // console.log(res.data)
               this.props.dispatch({
                 type: 'app/formData',
                 payload: res.data.info,
               })
-              console.log('propssss',this.props)
+              // console.log('propssss',this.props)
               this.props.history.push('/form')
             }
             else if (res.data.code === 1001) {

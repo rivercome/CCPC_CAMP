@@ -17,7 +17,7 @@ class Export extends Component {
     // console.log(this.state)
     if (this.state.value === 'neuqAcm111') {
       const link = 'neuqAcm111'
-      window.location.href = 'http://form.andyhui.xin/export?password=neuqAcm111'
+      window.location.href = 'http://form.andyhui.top/export?password=neuqAcm111'
     }
     else {
       message.error('密码错误')

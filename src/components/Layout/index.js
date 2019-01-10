@@ -11,11 +11,11 @@ const LayoutContent = (props) => {
     <div className='App'>
       <div className='App-header'>
         <img src={logo} className='App-logo' alt='logo' />
-        {/*<h2>CCPC-CAMP</h2>*/}
+        {/* <h2>CCPC-CAMP</h2> */}
       </div>
 
       <header className='App-nav'>
-        CCPC-CAMP暑期训练营确认
+        CCPC-Wannafly Winter Camp信息收集表
       </header>
       <div className='App-content'>
         {props.children}

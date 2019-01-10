@@ -4,6 +4,7 @@ export default {
   'entry': 'src/index.js',
   'disableCSSModules': true,
   'hash': true,
+  'publicPath': 'http://ccpc.acmclub.cn/camp/',
   'env': {
     'development': {
       'extraBabelPlugins': [
