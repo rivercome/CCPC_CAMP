@@ -15,7 +15,7 @@ const LayoutContent = (props) => {
       </div>
 
       <header className='App-nav'>
-        CCPC-Wannafly Winter Camp信息收集表
+        2018 CCPC-Wannafly Winter Camp行程住宿登记表
       </header>
       <div className='App-content'>
         {props.children}

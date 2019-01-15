@@ -70,10 +70,10 @@ class HomePage extends Component {
             登录
           </Button>
         </FormItem>
+        所有参加camp的同学必须于<strong>2019年1月11日24：00前</strong>完成住宿及行程登记。
       </Form>
-    );
+    )
   }
 }
-
 
 export default connect(({app}) => ({app}))(HomePage)

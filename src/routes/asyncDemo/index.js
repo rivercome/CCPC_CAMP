@@ -4,7 +4,7 @@ import moment from 'moment'
 import './index.less'
 import 'antd/dist/antd.css'
 import {Button, Col, Form, Input, message, Row, DatePicker, Select, Radio, Cascader, TimePicker} from 'antd'
-import optionsss from '../../utils/Options'
+// import optionsss from '../../utils/Options'
 import QueueAnim from 'rc-queue-anim'
 
 const { TextArea } = Input;
@@ -98,54 +98,78 @@ class FormPage extends Component {
       return res.json()
     }).then(json => {
       // console.log('json', json)
-      let options = []
+      /**
+       * 下面是一段特别窒息的数据处理的代码
+       * /
+       **/
+      let options = []   // 需要的Cascader options选项
       const type = []
       const type2 = []
-      for (let k in json.hotels) {
-        options.push({value: k, label: k, children: []})
+      for (let k in json.hotels) {   // k 获取到第一层的key值，即宾馆名称
+        options.push({value: k, label: k, children: []})  // 添加第一层宾馆名称
         let flag = []
         let flag2 = []
-        for (let l in json.hotels[k]) {
-          flag.push(l)
-          flag2.push(json.hotels[k][l])
-          console.log('1', json.hotels[k])
-          console.log('2', json.hotels[k][l])
+        for (let l in json.hotels[k]) {  // l 第二层的key值， 即房间类型
+          flag.push(l)                   // flag 保存房间类型
+          flag2.push(json.hotels[k][l])  // flag2 保存房间具体信息
+          // console.log('1', json.hotels[k])
+          // console.log('2', json.hotels[k][l])
         }
-        type.push(flag)
-        type2.push(flag2)
+        type.push(flag)                  // type 获取单次循环的结果，即顺序渲染
+        type2.push(flag2)                // type2 获取单次循环  的结果，即顺序渲染
       }
-
-      let hotelType = []
-      // console.log('length', type.length)
-      for (let i = 0; i < type.length; i++) {
-        hotelType[i] = type[i]
-      }
-
-      let hotelType2 = []
-      // console.log('length', type.length)
-      for (let i = 0; i < type2.length; i++) {
-        hotelType2[i] = type2[i]
-      }
-      console.log(' hotelType2[i]', hotelType2)
-      const len = options.length
-      // // console.log('len', len)
+      // let hotelType = []
+      // // console.log('length', type.length)
+      // for (let i = 0; i < type.length; i++) {
+      //   hotelType[i] = type[i]
+      // }
+      // let hotelType2 = []
+      // // console.log('length', type.length)
+      // for (let i = 0; i < type2.length; i++) {
+      //   hotelType2[i] = type2[i]
+      // }
+      // console.log(' hotelType2[i]', hotelType2)
+      const len = options.length  // 保存一下option的长度，传说可以优化循环，其实的确可以优化循环，但是数组长度太小，基本感受不到。
       for (let i = 0; i < len; i++) {
       //   console.log('hotelType', i, hotelType[i])
-        const value = hotelType[i].map(item => {
+        const value = type[i].map(item => {     // value保存一下，每个房间类型
           return item
         })
-        const value2 = hotelType2[i].map(item => {
-          console.log('item', item)
-          const value3 = item.map(res => {
-            console.log('res', res.hotel_room_num)
+        const value2 = type2[i].map(item => {    //  保存的是房间号
+          // console.log('item', item)
+          const value3 = item.map(res => {       // 循环单个房间类型下的房间号， 中间变量
+            // console.log('res', res)
             return res.hotel_room_num
           })
           return value3
         })
-        console.log('value3', value2)
+        const value3 = type2[i].map(item => {    // 原理同上，保存的是已经入住的人数
+          // console.log('item', item)
+          const value4 = item.map(res => {
+            // console.log('res', res)
+            return res.add_on
+          })
+          return value4
+        })
+        const peopleNum = []
         for (let j = 0; j < value.length; j++) {
-          // console.log('hotel', hotelType[i])
-          options[i].children.push({label: value[j], value: value[j], children: [{label: value2[j], value: ''}]})
+          // console.log('hotel', value2[j])
+          const num = value2[j].map(item => {
+            // console.log('item', item)
+            return item
+          })
+          value3[j].map(item => {
+            peopleNum.push(item)
+          })
+          // console.log('room', num)
+          // options[i].children.push({label: value[j], value: value[j], children: [{label: `${num}, 已有${value3[j]}人入住`, value: ''}]})
+          options[i].children.push({label: value[j], value: value[j], children: []})
+          for (let k = 0; k < num.length; k++) {
+            // console.log('k', k)
+            // options[i].children[j].push({label: `${num[k]}, 已有${value3[k]}人入住`, value: ''})
+            options[i].children[j].children.push({label: `${num[k]}, 已有${peopleNum[k]}人入住`, value: num[k]})
+            // console.log('aaa', options[i].children[j].children.push({label: `${num[k]}`, value: ''}))
+          }
         }
       }
       this.setState({options})
@@ -426,6 +450,7 @@ class FormPage extends Component {
             })(
               <Cascader
                 options={this.state.options}
+                style={{width: '400px'}}
               />
             )}
           </FormItem>
